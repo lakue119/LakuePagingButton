@@ -54,16 +54,19 @@ public class LakuePagingButton extends LinearLayout {
         this.setGravity(Gravity.CENTER);
     }
 
-    TextView textView;
+
 
     private int pageType(int startpage, int maxpage){
+        //다음 버튼이 없는 처음페이지
         if(maxpage <= MAX_PAGE ){
             return ADD_PAGE_TYPE_FIRST;
         }
 
+        //다음 버튼이 있는 페이지
         if(startpage <= 1){
             return ADD_PAGE_TYPE_FIRST_NEXT;
         }
+
 
         if(startpage-1 >= MAX_PAGE && maxpage >= startpage+MAX_PAGE){
             return ADD_PAGE_TYPE_CENTER;
@@ -73,6 +76,7 @@ public class LakuePagingButton extends LinearLayout {
 //            return Define.ADD_PAGE_TYPE_LAST_BEFORE;
 //        }
 
+        //이전버튼이 있는 페이지
         if(startpage+MAX_PAGE > maxpage){
             return ADD_PAGE_TYPE_LAST_BEFORE;
         }
@@ -93,6 +97,7 @@ public class LakuePagingButton extends LinearLayout {
         textView.setBackgroundColor(Color.TRANSPARENT);
     }
 
+    TextView textView;
     public void addBottomPageButton(int listsize, int nowpage) {
         this.removeAllViews();
         int nowpage_paging = (int)Math.ceil(nowpage/MAX_PAGE);
@@ -106,11 +111,9 @@ public class LakuePagingButton extends LinearLayout {
         if(lastpage > listsize){
             lastpage = listsize;
         }
-        Log.i("PAGELIST", "startpage" + startpage);
-        Log.i("PAGELIST", "lastpage" + lastpage);
-
         switch (pageType(startpage+1,listsize)){
             case ADD_PAGE_TYPE_FIRST:
+                Log.i("PAGELIST", "ADD_PAGE_TYPE_FIRST");
                 for (int i = startpage; i < lastpage; i++) {
                     textView = new TextView(context);
                     setText(textView,i);
@@ -136,6 +139,7 @@ public class LakuePagingButton extends LinearLayout {
                 }
                 break;
             case ADD_PAGE_TYPE_FIRST_NEXT:
+                Log.i("PAGELIST", "ADD_PAGE_TYPE_FIRST_NEXT");
                 for (int i = startpage; i < lastpage+1; i++) {
                     textView = new TextView(context);
                     setText(textView,i);
@@ -175,13 +179,14 @@ public class LakuePagingButton extends LinearLayout {
                                 onPageSelectListener.onPageCenter(textView.getId());
                             }
 
-                            textView.setTextColor(Color.BLACK);
+                           // textView.setTextColor(Color.BLACK);
                         }
                     });
                     this.addView(textView);
                 }
                 break;
             case ADD_PAGE_TYPE_CENTER:
+                Log.i("PAGELIST", "ADD_PAGE_TYPE_CENTER");
                 for (int i = startpage-1; i < lastpage+1; i++) {
                     textView = new TextView(context);
 
@@ -231,6 +236,7 @@ public class LakuePagingButton extends LinearLayout {
                 }
                 break;
             case ADD_PAGE_TYPE_LAST_BEFORE:
+                Log.i("PAGELIST", "ADD_PAGE_TYPE_LAST_BEFORE");
                 for (int i = startpage-1; i < lastpage; i++) {
                     textView = new TextView(context);
 
@@ -245,8 +251,10 @@ public class LakuePagingButton extends LinearLayout {
                     }
 
                     if (i == startpage) {
+                        Log.i("PAGELIST", "startpage / " + i + " is Brack");
                         textView.setTextColor(Color.BLACK);
                     } else {
+                        Log.i("PAGELIST", "else / " + i + " is colorGray");
                         textView.setTextColor(context.getResources().getColor(R.color.colorGray));
                     }
 
@@ -275,6 +283,7 @@ public class LakuePagingButton extends LinearLayout {
 
     private void buttonInit(int startpage, int lastpage) {
         for (int i = startpage; i < lastpage; i++) {
+            Log.i("PAGELIST", "buttonInit / " + i + " is Gray");
             textView = this.findViewById(i + 1);
             textView.setTextColor(context.getResources().getColor(R.color.colorGray));
         }
