@@ -2,6 +2,7 @@ package com.lakue.pagingbutton;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -20,16 +21,15 @@ public class LakuePagingButton extends LinearLayout {
 
     int beforePage = -1;
 
-    //31. SEL_ADDPAGEBUTTON_TYPE
-    public static final int ADD_PAGE_TYPE_FIRST= 10;
-    public static final int ADD_PAGE_TYPE_FIRST_NEXT = 11;
-    public static final int ADD_PAGE_TYPE_CENTER = 12;
-    public static final int ADD_PAGE_TYPE_LAST_BEFORE = 13;
-
     OnPageSelectListener onPageSelectListener;
 
     int MAX_PAGE = 5;
 
+    String prev = "prev";
+    String next = "next";
+    TextView textView;
+
+    DivisionPageType divisionPageType;
     public LakuePagingButton(Context context) {
         super(context);
         this.context = context;
@@ -56,37 +56,12 @@ public class LakuePagingButton extends LinearLayout {
 
 
 
-    private int pageType(int startpage, int maxpage){
-        //다음 버튼이 없는 처음페이지
-        if(maxpage <= MAX_PAGE ){
-            return ADD_PAGE_TYPE_FIRST;
-        }
-
-        //다음 버튼이 있는 페이지
-        if(startpage <= 1){
-            return ADD_PAGE_TYPE_FIRST_NEXT;
-        }
-
-
-        if(startpage-1 >= MAX_PAGE && maxpage >= startpage+MAX_PAGE){
-            return ADD_PAGE_TYPE_CENTER;
-        }
-
-//        if(startpage-1 >= 5 && maxpage < startpage-5){
-//            return Define.ADD_PAGE_TYPE_LAST_BEFORE;
-//        }
-
-        //이전버튼이 있는 페이지
-        if(startpage+MAX_PAGE > maxpage){
-            return ADD_PAGE_TYPE_LAST_BEFORE;
-        }
-        return -1;
-    }
-
+    //한번에 보여질 페이지의 수
     public void setPageItemCount(int count){
         MAX_PAGE = count;
     }
 
+    //텍스트 생성
     private void setText(TextView textView,int i){
         textView.setId(i + 1);
         textView.setTag(i + 1);
@@ -97,9 +72,13 @@ public class LakuePagingButton extends LinearLayout {
         textView.setBackgroundColor(Color.TRANSPARENT);
     }
 
-    TextView textView;
+
+    //페이지 버튼 생성
     public void addBottomPageButton(int listsize, int nowpage) {
         this.removeAllViews();
+        if(divisionPageType == null){
+            divisionPageType = new DivisionPageType(context);
+        }
         int nowpage_paging = (int)Math.ceil(nowpage/MAX_PAGE);
         if(nowpage % MAX_PAGE == 0){
             nowpage_paging = nowpage_paging -1;
@@ -111,168 +90,83 @@ public class LakuePagingButton extends LinearLayout {
         if(lastpage > listsize){
             lastpage = listsize;
         }
-        switch (pageType(startpage+1,listsize)){
-            case ADD_PAGE_TYPE_FIRST:
+
+        //타입으로 구분
+        switch (divisionPageType.pageType(startpage+1,listsize,MAX_PAGE)){
+            case Define.ADD_PAGE_TYPE_FIRST:
                 Log.i("PAGELIST", "ADD_PAGE_TYPE_FIRST");
                 for (int i = startpage; i < lastpage; i++) {
                     textView = new TextView(context);
                     setText(textView,i);
 
-                    if (i == 0) {
-                        textView.setTextColor(Color.BLACK);
-                    } else {
-                        textView.setTextColor(context.getResources().getColor(R.color.colorGray));
-                    }
+                    createButton(textView,i,startpage,lastpage,Define.ADD_PAGE_TYPE_FIRST);
 
                     final int finalLastpage = lastpage;
                     textView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             buttonInit(startpage, finalLastpage);
-                            textView = (TextView) v.findViewById(v.getId());
-                            textView.setTextColor(Color.BLACK);
-                            onPageSelectListener.onPageCenter(textView.getId());
+                            clickButton(v,startpage);
                         }
                     });
 
                     this.addView(textView);
                 }
                 break;
-            case ADD_PAGE_TYPE_FIRST_NEXT:
+            case Define.ADD_PAGE_TYPE_FIRST_NEXT:
                 Log.i("PAGELIST", "ADD_PAGE_TYPE_FIRST_NEXT");
                 for (int i = startpage; i < lastpage+1; i++) {
                     textView = new TextView(context);
                     setText(textView,i);
 
-                    if(i == lastpage){
-                        textView.setText("다음");
-                        textView.setTextSize(15);
-                    }
-
-                    if(beforePage > 0){
-                        if (i == beforePage) {
-                            textView.setTextColor(Color.BLACK);
-                            beforePage = -1;
-                        } else {
-                            textView.setTextColor(context.getResources().getColor(R.color.colorGray));
-                        }
-                    } else {
-                        if (i == startpage) {
-                            textView.setTextColor(Color.BLACK);
-                        } else {
-                            textView.setTextColor(context.getResources().getColor(R.color.colorGray));
-                        }
-                    }
+                    createButton(textView,i,startpage,lastpage,Define.ADD_PAGE_TYPE_FIRST_NEXT);
 
                     final int finalLastpage1 = lastpage;
                     textView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             buttonInit(startpage, finalLastpage1);
-                            textView = (TextView) v.findViewById(v.getId());
-                            if(textView.getText().toString().equals("다음")){
-                                onPageSelectListener.onPageNext(textView.getId());
-                            } else if(textView.getText().toString().equals("이전")){
-                                onPageSelectListener.onPageBefore(textView.getId());
-                                beforePage = startpage-1;
-                            } else {
-                                onPageSelectListener.onPageCenter(textView.getId());
-                            }
+                            clickButton(v,startpage);
 
-                           // textView.setTextColor(Color.BLACK);
                         }
                     });
                     this.addView(textView);
                 }
                 break;
-            case ADD_PAGE_TYPE_CENTER:
+            case Define.ADD_PAGE_TYPE_CENTER:
                 Log.i("PAGELIST", "ADD_PAGE_TYPE_CENTER");
                 for (int i = startpage-1; i < lastpage+1; i++) {
                     textView = new TextView(context);
 
                     setText(textView,i);
-
-                    if(i == lastpage){
-                        textView.setText("다음");
-                        textView.setTextSize(15);
-                    } else if(i == startpage-1){
-                        textView.setText("이전");
-                        textView.setTextSize(15);
-                    }
-
-                    if(beforePage > 0){
-                        if (i == beforePage) {
-                            textView.setTextColor(Color.BLACK);
-                            beforePage = -1;
-                        } else {
-                            textView.setTextColor(context.getResources().getColor(R.color.colorGray));
-                        }
-                    } else {
-                        if (i == startpage) {
-                            textView.setTextColor(Color.BLACK);
-                        } else {
-                            textView.setTextColor(context.getResources().getColor(R.color.colorGray));
-                        }
-                    }
+                    createButton(textView,i,startpage,lastpage,Define.ADD_PAGE_TYPE_CENTER);
 
                     final int finalLastpage2 = lastpage;
                     textView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             buttonInit(startpage, finalLastpage2);
-                            textView = (TextView) v.findViewById(v.getId());
-                            if(textView.getText().toString().equals("다음")){
-                                onPageSelectListener.onPageNext(textView.getId());
-                            } else if(textView.getText().toString().equals("이전")){
-                                onPageSelectListener.onPageBefore(textView.getId());
-                                beforePage = startpage-1;
-                            } else {
-                                onPageSelectListener.onPageCenter(textView.getId());
-                            }
-                            textView.setTextColor(Color.BLACK);
+                            clickButton(v,startpage);
                         }
                     });
                     this.addView(textView);
                 }
                 break;
-            case ADD_PAGE_TYPE_LAST_BEFORE:
+            case Define.ADD_PAGE_TYPE_LAST_BEFORE:
                 Log.i("PAGELIST", "ADD_PAGE_TYPE_LAST_BEFORE");
                 for (int i = startpage-1; i < lastpage; i++) {
                     textView = new TextView(context);
 
                     setText(textView,i);
 
-                    if(i == startpage-1){
-                        textView.setText("이전");
-                        textView.setTextSize(15);
-                    } else{
-                        textView.setText(String.valueOf(i + 1));
-                        textView.setTextSize(20);
-                    }
-
-                    if (i == startpage) {
-                        Log.i("PAGELIST", "startpage / " + i + " is Brack");
-                        textView.setTextColor(Color.BLACK);
-                    } else {
-                        Log.i("PAGELIST", "else / " + i + " is colorGray");
-                        textView.setTextColor(context.getResources().getColor(R.color.colorGray));
-                    }
+                    createButton(textView,i,startpage,lastpage,Define.ADD_PAGE_TYPE_LAST_BEFORE);
 
                     final int finalLastpage3 = lastpage;
                     textView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             buttonInit(startpage, finalLastpage3);
-                            textView = (TextView) v.findViewById(v.getId());
-                            if(textView.getText().toString().equals("다음")){
-                                onPageSelectListener.onPageNext(textView.getId());
-                            } else if(textView.getText().toString().equals("이전")){
-                                onPageSelectListener.onPageBefore(textView.getId());
-                                beforePage = startpage-1;
-                            } else {
-                                onPageSelectListener.onPageCenter(textView.getId());
-                            }
-                            textView.setTextColor(Color.BLACK);
+                            clickButton(v,startpage);
                         }
                     });
                     this.addView(textView);
@@ -281,9 +175,104 @@ public class LakuePagingButton extends LinearLayout {
         }
     }
 
+    private void clickButton(View v, int startpage){
+        textView = (TextView) v.findViewById(v.getId());
+        if(textView.getText().toString().equals(next)){
+            onPageSelectListener.onPageNext(textView.getId());
+        } else if(textView.getText().toString().equals(prev)){
+            beforePage = startpage-1;
+            onPageSelectListener.onPageBefore(textView.getId());
+        } else {
+            selectButton(textView,true);
+            onPageSelectListener.onPageCenter(textView.getId());
+        }
+    }
+
+    private void createButton(TextView textView, int idx, int startpage,int lastpage, int type){
+        switch (type){
+            case Define.ADD_PAGE_TYPE_FIRST:
+                if (idx == 0) {
+                    selectButton(textView,true);
+                } else {
+                    selectButton(textView,false);
+                }
+                break;
+            case Define.ADD_PAGE_TYPE_FIRST_NEXT:
+                if(idx == lastpage){
+                    textView.setText(next);
+                    textView.setTextSize(15);
+                }
+
+                if(beforePage > 0){
+                    if (idx == beforePage) {
+                        selectButton(textView,true);
+                        beforePage = -1;
+                    } else {
+                        selectButton(textView,false);
+                    }
+                } else {
+                    if (idx == startpage) {
+                        selectButton(textView,true);
+                    } else {
+                        selectButton(textView,false);
+                    }
+                }
+                break;
+            case Define.ADD_PAGE_TYPE_CENTER:
+                if(idx == lastpage){
+                    textView.setText(next);
+                    textView.setTextSize(15);
+                } else if(idx == startpage-1){
+                    textView.setText(prev);
+                    textView.setTextSize(15);
+                }
+
+                if(beforePage > 0){
+                    if (idx == beforePage) {
+                        selectButton(textView,true);
+                        beforePage = -1;
+                    } else {
+                        selectButton(textView,false);
+                    }
+                } else {
+                    if (idx == startpage) {
+                        selectButton(textView,true);
+                    } else {
+                        selectButton(textView,false);
+                    }
+                }
+                break;
+            case Define.ADD_PAGE_TYPE_LAST_BEFORE:
+                if(idx == startpage-1){
+                    textView.setText(prev);
+                    textView.setTextSize(15);
+                } else{
+                    textView.setText(String.valueOf(idx + 1));
+                    textView.setTextSize(20);
+                }
+
+                if (idx == startpage) {
+                    selectButton(textView,true);
+                } else {
+                    selectButton(textView,false);
+                }
+                break;
+        }
+    }
+
+    private void selectButton(TextView textView, Boolean isSelect){
+        if(isSelect){
+            textView.setTextColor(Color.BLACK);
+            textView.setTypeface(null, Typeface.BOLD);
+        } else {
+            textView.setTextColor(context.getResources().getColor(R.color.colorGray));
+            textView.setTypeface(null, Typeface.NORMAL);
+        }
+
+    }
+
     private void buttonInit(int startpage, int lastpage) {
         for (int i = startpage; i < lastpage; i++) {
-            Log.i("PAGELIST", "buttonInit / " + i + " is Gray");
             textView = this.findViewById(i + 1);
             textView.setTextColor(context.getResources().getColor(R.color.colorGray));
         }
