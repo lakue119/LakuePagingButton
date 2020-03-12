@@ -1,8 +1,9 @@
 # LakuePagingButton
 LakuePagingButton make it easy to page through when loading a lot of data.
 * When you select a button, you simply get the page you selected and call it.
-* You can customize it for ease of use.
+* You can customize it for ease of use.  
 
+[![](https://jitpack.io/v/lakue119/LakuePagingButton.svg)](https://jitpack.io/#lakue119/LakuePagingButton)
 # Sample
 
 <div>
